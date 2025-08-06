@@ -3,1001 +3,331 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>De-Well Logistics: Carrier Performance Evaluation</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="" />
+    <link rel="stylesheet" as="style" onload="this.rel='stylesheet'" href="https://fonts.googleapis.com/css2?display=swap&family=Inter%3Awght%40400%3B500%3B600%3B700%3B900&family=Noto+Sans%3Awght%40400%3B500%3B700%3B900" />
+    <title>FBA Shipment Cost Estimator</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <style>
-        :root {
-            --primary: #005a9e;
-            --primary-light: #0078d4;
-            --secondary: #ff6b35;
-            --dark: #333333;
-            --light: #f8f9fa;
-            --success: #28a745;
-            --warning: #ffc107;
-            --danger: #dc3545;
-            --gray: #666666;
-            --light-gray: #e9ecef;
-            --border-radius: 12px;
-            --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            --transition: all 0.15s ease;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: 'Roboto', Arial, sans-serif;
-            line-height: 1.6;
-            color: var(--dark);
-            background: linear-gradient(135deg, #f0f4f8 0%, #e1e7ed 100%);
-            min-height: 100vh;
-            padding: 20px;
-            -webkit-tap-highlight-color: transparent;
-            max-width: 900px;
-            margin: 40px auto;
-        }
-
-        .section {
-            background-color: #ffffff;
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            padding: 30px;
-            margin-bottom: 30px;
-            transition: transform 0.2s ease-in-out;
-        }
-
-        .section:hover {
-            transform: translateY(-5px);
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        h1 {
-            color: var(--primary);
-            text-align: center;
-            font-size: 2.5em;
-            margin-bottom: 20px;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
-        }
-
-        h2 {
-            color: var(--dark);
-            font-size: 1.8em;
-            margin-bottom: 20px;
-            border-bottom: 2px solid var(--primary-light);
-            padding-bottom: 5px;
-        }
-
-        h3 {
-            color: #444;
-            font-size: 1.2em;
-            margin: 20px 0 10px;
-            font-weight: 500;
-        }
-
-        p {
-            color: var(--gray);
-            line-height: 1.6;
-            font-size: 1em;
-        }
-
-        .info {
-            background-color: #e6f0fa;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            border-left: 4px solid var(--primary-light);
-        }
-
-        .info p {
-            margin: 5px 0;
-            color: #2e2e2e;
-        }
-
-        label {
-            display: block;
-            margin: 5px 0;
-            color: var(--dark);
-            font-size: 1em;
-        }
-
-        select {
-            padding: 10px;
-            width: 100%;
-            max-width: 350px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            font-size: 1em;
-            background-color: #f9f9f9;
-            transition: border-color 0.3s;
-        }
-
-        select:focus {
-            border-color: var(--primary-light);
-            outline: none;
-        }
-
-        option:disabled {
-            color: #999;
-            background-color: #f5f5f5;
-        }
-
-        .progress-steps {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 30px;
-            position: relative;
-        }
-
-        .progress-steps::before {
-            content: '';
-            position: absolute;
-            top: 15px;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background-color: var(--light-gray);
-            z-index: 1;
-        }
-
-        .step {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            position: relative;
-            z-index: 2;
-        }
-
-        .step-number {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            background-color: var(--light-gray);
-            color: var(--gray);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            margin-bottom: 8px;
-            border: 3px solid var(--light-gray);
-            transition: var(--transition);
-        }
-
-        .step.active .step-number {
-            background-color: var(--primary-light);
-            color: white;
-            border-color: var(--primary);
-        }
-
-        .step.completed .step-number {
-            background-color: var(--success);
-            color: white;
-            border-color: var(--success);
-        }
-
-        .step-label {
-            font-size: 0.85rem;
-            color: var(--gray);
-            font-weight: 500;
-            text-align: center;
-        }
-
-        .rating-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 10px;
-            margin: 15px 0;
-        }
-
-        .yes-no-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
-            margin: 15px 0;
-            max-width: 300px;
-        }
-
-        .carrier-list {
-            margin: 20px 0;
-        }
-
-        .carrier-item {
-            padding: 10px;
-            margin: 5px 0;
-            border-radius: 4px;
-            background-color: #f5f5f5;
-            display: flex;
-            align-items: center;
-        }
-
-        .carrier-item.rated {
-            background-color: #e8f5e9;
-        }
-
-        .carrier-item input[type="radio"] {
-            margin-right: 10px;
-        }
-
-        .carrier-item label {
-            flex-grow: 1;
-            margin: 0;
-            cursor: pointer;
-        }
-
-        .rated-tag {
-            color: #388e3c;
-            font-weight: bold;
-            margin-left: 10px;
-        }
-
-        .rating-option, .yes-no-option {
-            position: relative;
-        }
-
-        .rating-option input[type="radio"], 
-        .yes-no-option input[type="radio"] {
-            position: absolute;
+        /* Custom styles to enhance Tailwind */
+        #resultsPane {
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
             opacity: 0;
-            width: 0;
-            height: 0;
+            transform: translateY(20px);
         }
-
-        .rating-option label, 
-        .yes-no-option label {
-            display: block;
-            padding: 10px 5px;
-            text-align: center;
-            background-color: #f7f9fc;
-            border-radius: var(--border-radius);
-            cursor: pointer;
-            transition: var(--transition);
-            border: 2px solid transparent;
-            font-weight: normal;
-            user-select: none;
-        }
-
-        .rating-option label:hover, 
-        .yes-no-option label:hover {
-            background-color: #e2e6ea;
-        }
-
-        .rating-option input[type="radio"]:checked + label,
-        .yes-no-option input[type="radio"]:checked + label {
-            background-color: var(--primary-light);
-            color: white;
-            border-color: var(--primary);
-        }
-
-        /* Disabled state for questions */
-        .disabled-questions {
-            opacity: 0.5;
-            pointer-events: none;
-        }
-
-        button {
-            padding: 12px 30px;
-            background-color: var(--primary-light);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 1em;
-            transition: background-color 0.3s, transform 0.1s;
-        }
-
-        button:hover:not(:disabled) {
-            background-color: var(--primary);
-            transform: translateY(-2px);
-        }
-
-        button:active:not(:disabled) {
+        #resultsPane.visible {
+            opacity: 1;
             transform: translateY(0);
         }
-
-        button:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-        }
-
-        .btn-secondary {
-            background-color: #6c757d;
-        }
-
-        .btn-warning {
-            background-color: #ffc107;
-            color: #212529;
-        }
-
-        .btn-success {
-            background-color: #28a745;
-        }
-
-        .confirmation {
-            text-align: center;
-            padding: 40px;
-        }
-
-        .confirmation h2 {
-            color: var(--primary);
-            border-bottom: none;
-        }
-
-        .error-message {
-            color: var(--danger);
-            font-size: 0.9em;
-            margin-top: 5px;
-            display: none;
-        }
-
-        .has-error {
-            border: 1px solid var(--danger) !important;
-        }
-
-        @media (max-width: 768px) {
-            .rating-grid {
-                grid-template-columns: repeat(3, 1fr);
-            }
-
-            .yes-no-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
+        .result-item p.range { font-size: 1.25rem; } /* Smaller font for ranges */
     </style>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- Progress Steps -->
-    <div class="progress-steps">
-        <div class="step active" id="step1">
-            <div class="step-number">1</div>
-            <div class="step-label">Port Selection</div>
-        </div>
-        <div class="step" id="step2">
-            <div class="step-number">2</div>
-            <div class="step-label">Carrier Selection</div>
-        </div>
-        <div class="step" id="step3">
-            <div class="step-number">3</div>
-            <div class="step-label">Performance Rating</div>
-        </div>
-        <div class="step" id="step4">
-            <div class="step-number">4</div>
-            <div class="step-label">Completion</div>
-        </div>
-    </div>
-
-    <!-- Section 1: Title and Port Selection -->
-    <div id="section1" class="section">
-        <h1>De-Well Logistics: West Coast Carrier Performance</h1>
-        <div class="info">
-            <p><strong>Purpose:</strong> This evaluation ensures we maintain high standards with our transportation partners. Your ratings directly impact carrier relationships and service improvements.</p>
-            <p><strong>Confidentiality:</strong> All responses are anonymized in aggregate reporting.</p>
-            <p><strong>Time Required:</strong> 3-5 minutes per location rated.</p>
-            <p><strong>For questions, contact:</strong> <a href="mailto:schitturi@us.dewell.com">schitturi@us.dewell.com</a></p>
-        </div>
-        <h2>Section 1: Port Selection</h2>
-        <label for="locationSelect">Select a West Coast location:</label>
-        <select id="locationSelect">
-            <option value="">-- Select a location --</option>
-            <option value="SALT LAKE CITY,UT,US">SALT LAKE CITY, UT, US</option>
-            <option value="SEATTLE,WA,US">SEATTLE, WA, US</option>
-            <option value="PORTLAND,OR,US">PORTLAND, OR, US</option>
-            <option value="OAKLAND,CA,US">OAKLAND, CA, US</option>
-            <option value="LOS ANGELES,CA,US">LOS ANGELES, CA, US</option>
-            <option value="DENVER,CO,US">DENVER, CO, US</option>
-        </select>
-        <br><br>
-        <button id="startBtn" disabled>Proceed to Carrier Selection</button>
-    </div>
-
-    <!-- Section 2: Carrier Selection -->
-    <div id="section2" class="section hidden">
-        <h2>Section 2: Carrier Selection</h2>
-        <p>Selected Port: <strong><span id="selectedLocation"></span></strong></p>
-        <p>Select a carrier to rate (green = already rated):</p>
-        
-        <div id="carrierList" class="carrier-list">
-            <!-- Carrier list will be generated here -->
-        </div>
-        
-        <div style="display: flex; gap: 10px; margin-top: 20px;">
-            <button id="backToPortBtn" class="btn-secondary">Back to Ports</button>
-            <button id="rateCarrierBtn">Rate Selected Carrier</button>
-        </div>
-    </div>
-
-    <!-- Section 3: Performance Ratings -->
-    <div id="section3" class="section hidden">
-        <h2>Performance Ratings</h2>
-        <p>Port: <strong><span id="ratingLocation"></span></strong></p>
-        <p>Carrier: <strong><span id="ratingCarrier"></span></strong></p>
-
-        <!-- New Question: Do you know this carrier? -->
-        <h3>Do you know this carrier well enough to rate them?</h3>
-        <div class="yes-no-grid">
-            <div class="yes-no-option">
-                <input type="radio" id="knowCarrierYes" name="knowCarrier" value="Yes">
-                <label for="knowCarrierYes">Yes</label>
-            </div>
-            <div class="yes-no-option">
-                <input type="radio" id="knowCarrierNo" name="knowCarrier" value="No">
-                <label for="knowCarrierNo">No</label>
-            </div>
-        </div>
-        <div id="knowCarrierError" class="error-message">Please select an option</div>
-
-        <!-- Performance Questions (will be disabled if "No" is selected above) -->
-        <div id="performanceQuestions">
-            <!-- Question 1 -->
-            <h3>1. Based on all shipments, how reliable is this carrier's on-time delivery?</h3>
-            <div class="rating-grid">
-                <div class="rating-option">
-                    <input type="radio" id="onTimeDelivery1" name="onTimeDelivery" value="1">
-                    <label for="onTimeDelivery1">1 (Always Late)</label>
+    <div class="relative flex size-full min-h-screen flex-col bg-slate-50 group/design-root overflow-x-hidden" style='font-family: Inter, "Noto Sans", sans-serif;'>
+        <div id="app-container" class="layout-container flex h-full grow flex-col" style="display:none;">
+            <header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-b-[#e7edf4] px-10 py-3">
+                <div class="flex items-center gap-4 text-[#0d141c]">
+                    <div class="size-4">
+                        <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><g clip-path="url(#clip0_6_330)"><path fill-rule="evenodd" clip-rule="evenodd" d="M24 0.757355L47.2426 24L24 47.2426L0.757355 24L24 0.757355ZM21 35.7574V12.2426L9.24264 24L21 35.7574Z" fill="currentColor"></path></g><defs><clipPath id="clip0_6_330"><rect width="48" height="48" fill="white"></rect></clipPath></defs></svg>
+                    </div>
+                    <h2 class="text-[#0d141c] text-lg font-bold leading-tight tracking-[-0.015em]">Shipment Estimator</h2>
                 </div>
-                <div class="rating-option">
-                    <input type="radio" id="onTimeDelivery2" name="onTimeDelivery" value="2">
-                    <label for="onTimeDelivery2">2</label>
-                </div>
-                <div class="rating-option">
-                    <input type="radio" id="onTimeDelivery3" name="onTimeDelivery" value="3">
-                    <label for="onTimeDelivery3">3</label>
-                </div>
-                <div class="rating-option">
-                    <input type="radio" id="onTimeDelivery4" name="onTimeDelivery" value="4">
-                    <label for="onTimeDelivery4">4</label>
-                </div>
-                <div class="rating-option">
-                    <input type="radio" id="onTimeDelivery5" name="onTimeDelivery" value="5">
-                    <label for="onTimeDelivery5">5 (Always On Time)</label>
+            </header>
+
+            <div id="welcomePage" class="px-10 md:px-40 flex flex-1 justify-center py-5">
+                <div class="layout-content-container flex flex-col w-full max-w-[960px] flex-1">
+                    <div class="text-center">
+                        <h1 class="text-4xl font-bold text-[#004d99]">FBA Shipment Cost Estimator</h1>
+                        <p class="text-lg text-slate-600 mt-2">(Excludes Last Mile Rates)</p>
+                    </div>
+
+                    <div class="instructions text-left my-10">
+                        <h3 class="text-xl font-bold text-[#004d99] border-b-2 border-[#0d80f2] pb-2 mb-4">Key Amazon FBA Shipment Guidelines</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
+                            <div class="bg-white p-4 rounded-lg border border-slate-200">
+                                <p class="text-[#0d141c] text-base font-medium leading-normal">Carton Limits</p>
+                                <p class="text-slate-500 text-sm mt-1">Individual cartons must not exceed 25 inches on any side or weigh more than 50 pounds.</p>
+                            </div>
+                            <div class="bg-white p-4 rounded-lg border border-slate-200">
+                                <p class="text-[#0d141c] text-base font-medium leading-normal">Pallet Dimensions</p>
+                                <p class="text-slate-500 text-sm mt-1">Use 40" x 48" pallets, not to exceed 72" in height or 1,500 lbs in weight.</p>
+                            </div>
+                            <div class="bg-white p-4 rounded-lg border border-slate-200">
+                                <p class="text-[#0d141c] text-base font-medium leading-normal">Oversized Products</p>
+                                <p class="text-slate-500 text-sm mt-1">A single item is oversized if it is over 20 lbs or has any side longer than 18 inches.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                         <button id="startBtn" class="flex mx-auto min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-5 bg-[#0d80f2] text-slate-50 text-base font-bold"><span class="truncate">Start Estimating</span></button>
+                    </div>
                 </div>
             </div>
-            <div id="onTimeDeliveryError" class="error-message">Please select a rating</div>
+           
+            <div id="calculatorPage" class="px-10 md:px-40 flex flex-1 justify-center py-5" style="display:none;">
+                 <div class="layout-content-container flex flex-col w-full max-w-[960px] flex-1">
+                    <h2 class="text-2xl font-bold text-center">Estimate Costs</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8 text-left">
+                        <div class="form-group">
+                            <label for="cbm" class="block text-sm font-medium text-gray-700">CBM (m³)</label>
+                            <input type="number" id="cbm" placeholder="e.g., 53" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </div>
+                        <div class="form-group">
+                            <label for="cartonCount" class="block text-sm font-medium text-gray-700">Carton Count</label>
+                            <input type="number" id="cartonCount" placeholder="e.g., 1200" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </div>
+                        <div class="form-group">
+                            <label for="skuCount" class="block text-sm font-medium text-gray-700">SKU Count</label>
+                            <input type="number" id="skuCount" placeholder="Optional" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        </div>
+                         <div class="form-group">
+                             <label for="loadType" class="block text-sm font-medium text-gray-700">Type of Load</label>
+                             <select id="loadType" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                <option value="" disabled selected>Select...</option>
+                                <option value="Floor in/Floor out">Floor in/Floor out</option>
+                                <option value="Palletized">Palletized</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="location" class="block text-sm font-medium text-gray-700">Location</label>
+                            <select id="location" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                 <option value="" disabled selected>Select...</option>
+                                <option value="LOS ANGELES">LOS ANGELES</option>
+                                <option value="SAVANNAH">SAVANNAH</option>
+                                <option value="NEW JERSEY">NEW JERSEY</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="storage" class="block text-sm font-medium text-gray-700">Storage Required?</label>
+                            <select id="storage" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                <option value="No" selected>No</option>
+                                <option value="Yes">Yes</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="flex gap-4 mt-8">
+                        <button id="calculateBtn" class="flex-1 flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-5 bg-[#0d80f2] text-slate-50 text-base font-bold"><span class="truncate">Calculate Estimates</span></button>
+                        <button id="clearBtn" class="flex-1 flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-5 bg-slate-600 text-slate-50 text-base font-bold"><span class="truncate">Clear</span></button>
+                    </div>
+                   
+                    <div id="resultsPane" class="mt-10 p-6 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+                            <div class="md:col-span-3">
+                                <h4 class="text-sm font-medium text-slate-500">Container Type</h4>
+                                <p id="containerType" class="text-2xl font-bold text-[#0d80f2] mt-1">-</p>
+                            </div>
+                            <div class="result-item">
+                                <h4 class="text-sm font-medium text-slate-500">Pallet Count</h4>
+                                <p id="palletCount" class="text-2xl font-bold text-[#0d80f2] mt-1">-</p>
+                            </div>
+                            <div class="result-item md:col-span-2">
+                                <h4 class="text-sm font-medium text-slate-500">All-in Rate</h4>
+                                <p id="allInRate" class="text-2xl font-bold text-green-600 mt-1">$0.00</p>
+                            </div>
+                        </div>
+                    </div>
 
-            <!-- Question 2 -->
-            <h3>2. Was the signed Proof of Delivery (POD) received within 7 days of empty return?</h3>
-            <div class="yes-no-grid">
-                <div class="yes-no-option">
-                    <input type="radio" id="podReceivedYes" name="podReceived" value="Yes">
-                    <label for="podReceivedYes">Yes</label>
-                </div>
-                <div class="yes-no-option">
-                    <input type="radio" id="podReceivedNo" name="podReceived" value="No">
-                    <label for="podReceivedNo">No</label>
-                </div>
+                    <div class="mt-8 text-left text-xs text-slate-500 bg-slate-100 p-4 rounded-lg">
+                        <p id="palletNote"> </p>
+                    </div>
+                 </div>
             </div>
-            <div id="podReceivedError" class="error-message">Please select an option</div>
-
-            <!-- Question 3 -->
-            <h3>3. How often did shipments arrive with no damage or loss?</h3>
-            <div class="rating-grid">
-                <div class="rating-option">
-                    <input type="radio" id="noDamage1" name="noDamage" value="1">
-                    <label for="noDamage1">1 (Frequent Issues)</label>
-                </div>
-                <div class="rating-option">
-                    <input type="radio" id="noDamage2" name="noDamage" value="2">
-                    <label for="noDamage2">2</label>
-                </div>
-                <div class="rating-option">
-                    <input type="radio" id="noDamage3" name="noDamage" value="3">
-                    <label for="noDamage3">3</label>
-                </div>
-                <div class="rating-option">
-                    <input type="radio" id="noDamage4" name="noDamage" value="4">
-                    <label for="noDamage4">4</label>
-                </div>
-                <div class="rating-option">
-                    <input type="radio" id="noDamage5" name="noDamage" value="5">
-                    <label for="noDamage5">5 (No Issues)</label>
-                </div>
-            </div>
-            <div id="noDamageError" class="error-message">Please select a rating</div>
-
-            <!-- Question 4 -->
-            <h3>4. Rate their responsiveness and clarity when issues arise (Communication)</h3>
-            <div class="rating-grid">
-                <div class="rating-option">
-                    <input type="radio" id="communication1" name="communication" value="1">
-                    <label for="communication1">1 (Poor)</label>
-                </div>
-                <div class="rating-option">
-                    <input type="radio" id="communication2" name="communication" value="2">
-                    <label for="communication2">2</label>
-                </div>
-                <div class="rating-option">
-                    <input type="radio" id="communication3" name="communication" value="3">
-                    <label for="communication3">3</label>
-                </div>
-                <div class="rating-option">
-                    <input type="radio" id="communication4" name="communication" value="4">
-                    <label for="communication4">4</label>
-                </div>
-                <div class="rating-option">
-                    <input type="radio" id="communication5" name="communication" value="5">
-                    <label for="communication5">5 (Excellent)</label>
-                </div>
-            </div>
-            <div id="communicationError" class="error-message">Please select a rating</div>
-
-            <!-- Question 5 -->
-            <h3>5. Were the carrier's invoices error-free and compliant with agreed terms?</h3>
-            <div class="yes-no-grid">
-                <div class="yes-no-option">
-                    <input type="radio" id="billingAccuracyYes" name="billingAccuracy" value="Yes">
-                    <label for="billingAccuracyYes">Yes</label>
-                </div>
-                <div class="yes-no-option">
-                    <input type="radio" id="billingAccuracyNo" name="billingAccuracy" value="No">
-                    <label for="billingAccuracyNo">No</label>
-                </div>
-            </div>
-            <div id="billingAccuracyError" class="error-message">Please select an option</div>
-
-            <!-- Question 6 -->
-            <h3>6. How confident are you in the carrier's overall reliability?</h3>
-            <div class="rating-grid">
-                <div class="rating-option">
-                    <input type="radio" id="reliability1" name="reliability" value="1">
-                    <label for="reliability1">1 (Not Confident)</label>
-                </div>
-                <div class="rating-option">
-                    <input type="radio" id="reliability2" name="reliability" value="2">
-                    <label for="reliability2">2</label>
-                </div>
-                <div class="rating-option">
-                    <input type="radio" id="reliability3" name="reliability" value="3">
-                    <label for="reliability3">3</label>
-                </div>
-                <div class="rating-option">
-                    <input type="radio" id="reliability4" name="reliability" value="4">
-                    <label for="reliability4">4</label>
-                </div>
-                <div class="rating-option">
-                    <input type="radio" id="reliability5" name="reliability" value="5">
-                    <label for="reliability5">5 (Extremely Confident)</label>
-                </div>
-            </div>
-            <div id="reliabilityError" class="error-message">Please select a rating</div>
-
-            <!-- Question 7 -->
-            <h3>7. How often does this carrier incur unexpected accessorial charges (storage, prepull, etc.)?</h3>
-            <div class="rating-grid">
-                <div class="rating-option">
-                    <input type="radio" id="accessorial1" name="accessorial" value="1">
-                    <label for="accessorial1">1 (Very Frequent)</label>
-                </div>
-                <div class="rating-option">
-                    <input type="radio" id="accessorial2" name="accessorial" value="2">
-                    <label for="accessorial2">2 (Frequent)</label>
-                </div>
-                <div class="rating-option">
-                    <input type="radio" id="accessorial3" name="accessorial" value="3">
-                    <label for="accessorial3">3 (Occasional)</label>
-                </div>
-                <div class="rating-option">
-                    <input type="radio" id="accessorial4" name="accessorial" value="4">
-                    <label for="accessorial4">4 (Rare)</label>
-                </div>
-                <div class="rating-option">
-                    <input type="radio" id="accessorial5" name="accessorial" value="5">
-                    <label for="accessorial5">5 (Almost Never)</label>
-                </div>
-            </div>
-            <div id="accessorialError" class="error-message">Please select a rating</div>
-
-            <!-- Question 8 -->
-            <h3>8. How well does this carrier preschedule shipments?</h3>
-            <div class="rating-grid">
-                <div class="rating-option">
-                    <input type="radio" id="prescheduling1" name="prescheduling" value="1">
-                    <label for="prescheduling1">1 (Poor)</label>
-                </div>
-                <div class="rating-option">
-                    <input type="radio" id="prescheduling2" name="prescheduling" value="2">
-                    <label for="prescheduling2">2</label>
-                </div>
-                <div class="rating-option">
-                    <input type="radio" id="prescheduling3" name="prescheduling" value="3">
-                    <label for="prescheduling3">3</label>
-                </div>
-                <div class="rating-option">
-                    <input type="radio" id="prescheduling4" name="prescheduling" value="4">
-                    <label for="prescheduling4">4</label>
-                </div>
-                <div class="rating-option">
-                    <input type="radio" id="prescheduling5" name="prescheduling" value="5">
-                    <label for="prescheduling5">5 (Excellent)</label>
-                </div>
-            </div>
-            <div id="preschedulingError" class="error-message">Please select a rating</div>
-
-            <!-- Question 9 -->
-            <h3>9. How often are invoices received within 10 days of empty return?</h3>
-            <div class="rating-grid">
-                <div class="rating-option">
-                    <input type="radio" id="invoiceTimeliness1" name="invoiceTimeliness" value="1">
-                    <label for="invoiceTimeliness1">1 (Rarely On Time)</label>
-                </div>
-                <div class="rating-option">
-                    <input type="radio" id="invoiceTimeliness2" name="invoiceTimeliness" value="2">
-                    <label for="invoiceTimeliness2">2</label>
-                </div>
-                <div class="rating-option">
-                    <input type="radio" id="invoiceTimeliness3" name="invoiceTimeliness" value="3">
-                    <label for="invoiceTimeliness3">3</label>
-                </div>
-                <div class="rating-option">
-                    <input type="radio" id="invoiceTimeliness4" name="invoiceTimeliness" value="4">
-                    <label for="invoiceTimeliness4">4</label>
-                </div>
-                <div class="rating-option">
-                    <input type="radio" id="invoiceTimeliness5" name="invoiceTimeliness" value="5">
-                    <label for="invoiceTimeliness5">5 (Always Within 10 Days)</label>
-                </div>
-            </div>
-            <div id="invoiceTimelinessError" class="error-message">Please select a rating</div>
-        </div>
-
-        <div style="display: flex; gap: 10px; margin-top: 20px;">
-            <button id="backToCarrierListBtn" class="btn-secondary">Back to Carrier List</button>
-            <button id="submitRatingBtn" class="btn-success">Submit Rating</button>
         </div>
     </div>
 
-    <!-- Section 4: Final Confirmation -->
-    <div id="section4" class="section hidden confirmation">
-        <h2>Evaluation Complete!</h2>
-        <p>Thank you for your feedback. Your ratings have been submitted.</p>
-        <p id="submissionStatus"></p>
-        <button id="newEvaluationBtn">Start New Evaluation</button>
-    </div>
+<script>
+    // --- Configuration ---
+    const API_KEY = 'AIzaSyAgRYDlwfXHI0AWVOpY8OHHCd7aVgS4Bcc';
+    const SPREADSHEET_ID = '1QrO4kP9ikY8Ukr8sxi6egOcPJkbaiGLvx7r4nuDn7cU';
+    const PASSWORD = 'admin123';
+    // ---------------------
 
-    <script>
-        // West Coast data (Trinity Logistics removed)
-        const westCoastData = {
-            "SALT LAKE CITY,UT,US": [
-                "UTAH RAIL RUNNERS INC"
-            ],
-            "SEATTLE,WA,US": [
-                "ALL SEASON TRANSPORT LLC",
-	        "EAGLE SYSTEMS INC",
-	        "SKY CITY TRUCKING LLC"
-            ],
-            "PORTLAND,OR,US": [
-                "TOWN TRUCKING"
-            ],
-            "OAKLAND,CA,US": [
-                "CAPITAL CONTAINER TRANSPORT LLC",
-                "GSK TRUCKING INC",
-                "PACIFIC TRUCKING LLC",
-                "WAKOOL TRANSPORT",
-                "CAL CARTAGE"
-            ],
-            "LOS ANGELES,CA,US": [
-                "FITTED TRANSPORT",
-                "NATIONAL FREIGHT LOGISTICS LLC",
-                "NGL LOGISTICS LLC",
-                "WAKOOL TRANSPORT",
-                "XTL TRUCKING INC",
-                "CAL CARTAGE",
-                "CROWN XPRESS TRANSPORT LLC",
-                "SKI TRUCKING INC",
-                "SKY DISTRIBUTION EXPRESS",
-                "UNIS TRANSPORTATION"
-            ],
-            "DENVER,CO,US": [
-                "QFS TRANSPORTATION LLC"
-            ]
-        };
-
-        // DOM Elements
-        const locationSelect = document.getElementById('locationSelect');
-        const startBtn = document.getElementById('startBtn');
-        const section1 = document.getElementById('section1');
-        const section2 = document.getElementById('section2');
-        const section3 = document.getElementById('section3');
-        const section4 = document.getElementById('section4');
-        const selectedLocation = document.getElementById('selectedLocation');
-        const carrierList = document.getElementById('carrierList');
-        const ratingLocation = document.getElementById('ratingLocation');
-        const ratingCarrier = document.getElementById('ratingCarrier');
-        const completedLocation = document.getElementById('completedLocation');
-        const submissionStatus = document.getElementById('submissionStatus');
-        const performanceQuestions = document.getElementById('performanceQuestions');
-        
-        // Progress steps
-        const step1 = document.getElementById('step1');
-        const step2 = document.getElementById('step2');
-        const step3 = document.getElementById('step3');
-        const step4 = document.getElementById('step4');
-
-        // State variables
-        let currentLocation = '';
-        let currentCarrier = '';
-        let allRatings = {};
-
-        // Initialize ratings object
-        function initializeRatings() {
-            allRatings = {};
-            Object.keys(westCoastData).forEach(location => {
-                allRatings[location] = {};
-                westCoastData[location].forEach(carrier => {
-                    allRatings[location][carrier] = null;
-                });
-            });
-        }
-        initializeRatings();
-
-        // Update progress steps
-        function updateProgress(currentStep) {
-            [step1, step2, step3, step4].forEach(step => {
-                step.classList.remove('active', 'completed');
-            });
-
-            if (currentStep >= 1) step1.classList.add('completed');
-            if (currentStep >= 2) step2.classList.add('completed');
-            if (currentStep >= 3) step3.classList.add('completed');
-            if (currentStep >= 4) step4.classList.add('completed');
-
-            if (currentStep <= 4) {
-                document.getElementById(`step${currentStep}`).classList.add('active');
-            }
-        }
-
-        // Update location dropdown to disable completed locations
-        function updateLocationDropdown() {
-            Array.from(locationSelect.options).forEach(option => {
-                if (option.value && option.value !== '') {
-                    const allRated = allRatings[option.value] && 
-                                   Object.values(allRatings[option.value]).every(rating => rating !== null);
-                    option.disabled = allRated;
-                    option.textContent = option.value + (allRated ? ' (Completed)' : '');
-                }
-            });
-        }
-
-        // Enable "Proceed" button when a location is selected
-        locationSelect.addEventListener('change', () => {
-            startBtn.disabled = locationSelect.value === '';
-        });
-
-        // Populate carriers and show Section 2
-        startBtn.addEventListener('click', () => {
-            currentLocation = locationSelect.value;
-            selectedLocation.textContent = currentLocation;
-            renderCarrierList();
-            section1.classList.add('hidden');
-            section2.classList.remove('hidden');
-            updateProgress(2);
-        });
-
-        // Render carrier list with rated status
-        function renderCarrierList() {
-            carrierList.innerHTML = '';
-            
-            westCoastData[currentLocation].forEach(carrier => {
-                const isRated = allRatings[currentLocation][carrier] !== null;
-                
-                const div = document.createElement('div');
-                div.className = `carrier-item ${isRated ? 'rated' : ''}`;
-                
-                const radio = document.createElement('input');
-                radio.type = 'radio';
-                radio.name = 'selectedCarrier';
-                radio.id = `carrier-${carrier.replace(/\s+/g, '-')}`;
-                radio.value = carrier;
-                radio.disabled = isRated;
-                
-                const label = document.createElement('label');
-                label.htmlFor = radio.id;
-                label.textContent = carrier;
-                if (isRated) {
-                    const span = document.createElement('span');
-                    span.className = 'rated-tag';
-                    span.textContent = '(rated)';
-                    label.appendChild(span);
-                }
-                
-                div.appendChild(radio);
-                div.appendChild(label);
-                carrierList.appendChild(div);
-            });
-        }
-
-        // Rate selected carrier
-        document.getElementById('rateCarrierBtn').addEventListener('click', () => {
-            const selected = document.querySelector('input[name="selectedCarrier"]:checked');
-            if (!selected) {
-                alert('Please select a carrier to rate');
-                return;
-            }
-            
-            currentCarrier = selected.value;
-            ratingLocation.textContent = currentLocation;
-            ratingCarrier.textContent = currentCarrier;
-            
-            // Reset form
-            document.querySelectorAll('input[type="radio"]').forEach(input => {
-                if (input.name !== 'selectedCarrier') input.checked = false;
-            });
-            
-            // Hide all error messages
-            document.querySelectorAll('.error-message').forEach(el => {
-                el.style.display = 'none';
-            });
-            
-            // Enable all questions by default
-            performanceQuestions.classList.remove('disabled-questions');
-            
-            section2.classList.add('hidden');
-            section3.classList.remove('hidden');
-            updateProgress(3);
-        });
-
-        // Handle "Do you know this carrier?" selection
-        document.querySelectorAll('input[name="knowCarrier"]').forEach(radio => {
-            radio.addEventListener('change', (e) => {
-                if (e.target.value === 'No') {
-                    // Disable all performance questions
-                    performanceQuestions.classList.add('disabled-questions');
-                    // Uncheck any selected performance questions
-                    document.querySelectorAll('#performanceQuestions input[type="radio"]').forEach(input => {
-                        input.checked = false;
-                    });
-                } else {
-                    // Enable all performance questions
-                    performanceQuestions.classList.remove('disabled-questions');
-                }
-            });
-        });
-
-        // Back to carrier list from rating
-        document.getElementById('backToCarrierListBtn').addEventListener('click', () => {
-            section3.classList.add('hidden');
-            section2.classList.remove('hidden');
-            updateProgress(2);
-        });
-
-        // Back to port selection
-        document.getElementById('backToPortBtn').addEventListener('click', () => {
-            section2.classList.add('hidden');
-            section1.classList.remove('hidden');
-            updateProgress(1);
-        });
-
-        // Validate all required questions are answered
-        function validateForm() {
-            let isValid = true;
-            
-            // Check if "know carrier" is answered
-            const knowCarrier = document.querySelector('input[name="knowCarrier"]:checked');
-            if (!knowCarrier) {
-                document.getElementById('knowCarrierError').style.display = 'block';
-                isValid = false;
-            } else {
-                document.getElementById('knowCarrierError').style.display = 'none';
-                
-                // If they know the carrier, validate all performance questions
-                if (knowCarrier.value === 'Yes') {
-                    const questionNames = [
-                        'onTimeDelivery', 'podReceived', 'noDamage', 'communication',
-                        'billingAccuracy', 'reliability', 'accessorial', 'prescheduling', 'invoiceTimeliness'
-                    ];
-                    
-                    questionNames.forEach(name => {
-                        const isAnswered = document.querySelector(`input[name="${name}"]:checked`);
-                        const errorElement = document.getElementById(`${name}Error`);
-                        
-                        if (!isAnswered) {
-                            errorElement.style.display = 'block';
-                            isValid = false;
-                        } else {
-                            errorElement.style.display = 'none';
-                        }
-                    });
-                }
-            }
-            
-            return isValid;
-        }
-
-        // Submit rating for current carrier
-        document.getElementById('submitRatingBtn').addEventListener('click', () => {
-            if (!validateForm()) {
-                return;
-            }
-            
-            const knowCarrier = document.querySelector('input[name="knowCarrier"]:checked').value;
-            
-            // Save rating
-            allRatings[currentLocation][currentCarrier] = {
-                knowCarrier: knowCarrier,
-                onTimeDelivery: knowCarrier === 'Yes' ? document.querySelector('input[name="onTimeDelivery"]:checked').value : "N/A",
-                podReceived: knowCarrier === 'Yes' ? document.querySelector('input[name="podReceived"]:checked').value : "N/A",
-                noDamage: knowCarrier === 'Yes' ? document.querySelector('input[name="noDamage"]:checked').value : "N/A",
-                communication: knowCarrier === 'Yes' ? document.querySelector('input[name="communication"]:checked').value : "N/A",
-                billingAccuracy: knowCarrier === 'Yes' ? document.querySelector('input[name="billingAccuracy"]:checked').value : "N/A",
-                reliability: knowCarrier === 'Yes' ? document.querySelector('input[name="reliability"]:checked').value : "N/A",
-                accessorial: knowCarrier === 'Yes' ? document.querySelector('input[name="accessorial"]:checked').value : "N/A",
-                prescheduling: knowCarrier === 'Yes' ? document.querySelector('input[name="prescheduling"]:checked').value : "N/A",
-                invoiceTimeliness: knowCarrier === 'Yes' ? document.querySelector('input[name="invoiceTimeliness"]:checked').value : "N/A",
-                timestamp: new Date().toISOString(),
-                region: "West Coast"
+    let pricingData = {};
+    const elements = {
+        appContainer: document.getElementById('app-container'),
+        welcomePage: document.getElementById('welcomePage'),
+        calculatorPage: document.getElementById('calculatorPage'),
+        startBtn: document.getElementById('startBtn'),
+        cbm: document.getElementById('cbm'),
+        cartonCount: document.getElementById('cartonCount'),
+        skuCount: document.getElementById('skuCount'),
+        loadType: document.getElementById('loadType'),
+        location: document.getElementById('location'),
+        storage: document.getElementById('storage'),
+        calculateBtn: document.getElementById('calculateBtn'),
+        clearBtn: document.getElementById('clearBtn'),
+        resultsPane: document.getElementById('resultsPane'),
+        containerType: document.getElementById('containerType'),
+        palletCount: document.getElementById('palletCount'),
+        allInRate: document.getElementById('allInRate'),
+        palletNote: document.getElementById('palletNote')
+    };
+   
+    async function fetchAndParseData() {
+        const sheetName = 'Admin_PricingData';
+        const range = `${sheetName}!A1:J50`;
+        const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${range}?key=${API_KEY}`;
+        try {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error(`Google Sheets API Error: ${(await response.json()).error.message}`);
+            const data = await response.json();
+           
+            const cleanAndParse = (input, isFloat = true) => {
+                const cleanedString = String(input || '0').replace(/,/g, '');
+                return isFloat ? parseFloat(cleanedString) : parseInt(cleanedString, 10);
             };
-            
-            // Check if all carriers are rated
-            const allRated = Object.values(allRatings[currentLocation]).every(rating => rating !== null);
-            
-            if (allRated) {
-                // Update location dropdown to disable this location
-                updateLocationDropdown();
-                
-                // Check if all locations are rated
-                const allLocationsRated = Object.keys(allRatings).every(location => 
-                    Object.values(allRatings[location]).every(rating => rating !== null)
-                );
-                
-                if (allLocationsRated) {
-                    // All locations rated - go to completion page
-                    section3.classList.add('hidden');
-                    submitAllRatings();
-                } else {
-                    // Return to section 1 to select another location
-                    section3.classList.add('hidden');
-                    section1.classList.remove('hidden');
-                    locationSelect.value = '';
-                    startBtn.disabled = true;
-                    updateProgress(1);
-                }
-            } else {
-                // Return to carrier list to rate another carrier
-                section3.classList.add('hidden');
-                renderCarrierList();
-                section2.classList.remove('hidden');
-                updateProgress(2);
-            }
-        });
 
-        // Start new evaluation
-        document.getElementById('newEvaluationBtn').addEventListener('click', () => {
-            initializeRatings();
-            locationSelect.value = '';
-            startBtn.disabled = true;
-            section4.classList.add('hidden');
-            section1.classList.remove('hidden');
-            updateProgress(1);
-        });
-
-        // Submit all ratings to Google Sheets
-        function submitAllRatings() {
-            section4.classList.remove('hidden');
-            updateProgress(4);
-            
-            fetch('https://script.google.com/macros/s/AKfycbz2AUpaf70W6zcN2-_ak6kcYqQPVlsyRvPlf0OKqRd-EcJYpKRr1O7MxL6DvHIN9Pw/exec', {
-                method: 'POST',
-                body: JSON.stringify(allRatings)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    submissionStatus.textContent = 'Data sent successfully!';
-                } else {
-                    submissionStatus.textContent = 'Error: ' + data.message;
-                }
-            })
-            .catch(err => {
-                console.error('Error:', err);
-                submissionStatus.textContent = 'Submission error. Please try again.';
+            const getRowData = (arr) => ({
+                basePrice: cleanAndParse(arr[1]),
+                includedCartons: cleanAndParse(arr[2], false),
+                includedSKUs: cleanAndParse(arr[3], false)
             });
+
+            const sheetValues = data.values;
+            pricingData.locations = {
+                'BELL': { '20GP': getRowData(sheetValues[3]), '40GP/HQ': getRowData(sheetValues[4]), '45HQ': getRowData(sheetValues[5]) },
+                'SAVANNAH': { '20GP': getRowData(sheetValues[9]), '40GP/HQ': getRowData(sheetValues[10]), '45HQ': getRowData(sheetValues[11]) },
+                'NEW JERSEY': { '20GP': getRowData(sheetValues[16]), '40GP/HQ': getRowData(sheetValues[17]), '45HQ': getRowData(sheetValues[18]) }
+            };
+
+            pricingData.carrier = {};
+            for (let i = 23; i <= 25; i++) {
+                if(sheetValues[i] && sheetValues[i][0]) {
+                    const locKey = sheetValues[i][0].toUpperCase();
+                    pricingData.carrier[locKey] = {
+                        carrier: sheetValues[i][1], drayRate: cleanAndParse(sheetValues[i][2]), chassisCost: cleanAndParse(sheetValues[i][3]),
+                        standardChassisDays: cleanAndParse(sheetValues[i][4], false), freeChassisDays: cleanAndParse(sheetValues[i][5], false),
+                        csrCommission: cleanAndParse(sheetValues[i][6])
+                    };
+                }
+            }
+           
+            pricingData.extraCharges = {};
+            pricingData.limitations = {};
+            for(let i = 1; i < sheetValues.length; i++) {
+                if(sheetValues[i] && sheetValues[i][8]){
+                    const key = sheetValues[i][8];
+                    const value = sheetValues[i][9];
+                    pricingData.extraCharges[key] = cleanAndParse(value);
+                    if(key.toLowerCase().includes('cbm') || key.toLowerCase().includes('max') || key.toLowerCase().includes('threshold') || key.toLowerCase().includes('side')) {
+                        pricingData.limitations[key] = value === '>65' ? 65 : cleanAndParse(value);
+                    }
+                }
+            }
+
+            const opCBM = pricingData.limitations['CBM per Pallet (Operations)'];
+            const whCBM = pricingData.limitations['CBM per Pallet (Warehouse)'];
+            elements.palletNote.innerHTML = `<strong>Note:</strong> Pallet count ranges are estimated using an Operations value of ${opCBM} CBM/pallet and a Warehouse value of ${whCBM} CBM/pallet.`;
+
+        } catch (error) {
+            elements.resultsPane.style.display = 'none'; // Hide results on error
+            alert(`${error.message}`);
+            console.error(error);
+        }
+    }
+
+    function calculateEstimate() {
+        const cbm = parseFloat(elements.cbm.value);
+        const cartonCount = parseInt(elements.cartonCount.value);
+        let skuCount = parseInt(elements.skuCount.value);
+        const loadType = elements.loadType.value;
+        const locationInput = elements.location.value;
+        const storage = elements.storage.value;
+
+        if (isNaN(cbm) || cbm <= 0 || isNaN(cartonCount) || cartonCount <= 0) { alert('Please enter valid numbers for CBM and Carton Count.'); return; }
+        if (!loadType || !locationInput) { alert('Please select a Type of Load and a Location.'); return; }
+
+        const cbm20GP = pricingData.limitations['Container Threshold CBM (20GP)'];
+        const cbm40GP = pricingData.limitations['Container Threshold CBM (40GP/HQ)'];
+        let containerType;
+        if (cbm <= cbm20GP) containerType = '20GP';
+        else if (cbm <= cbm40GP) containerType = '40GP/HQ';
+        else containerType = '45HQ';
+
+        let locKey = locationInput.includes('LOS ANGELES') ? 'BELL' : locationInput;
+        const basePricing = pricingData.locations[locKey][containerType];
+
+        if (isNaN(skuCount) || skuCount <= 0) { skuCount = basePricing.includedSKUs; }
+
+        let cartonSurcharge = (cartonCount > basePricing.includedCartons) ? (cartonCount - basePricing.includedCartons) * (pricingData.extraCharges['Carton Surcharge (Floor in/Pallet out)'] || 0) : 0;
+        let skuSurcharge = (skuCount > basePricing.includedSKUs) ? (skuCount - basePricing.includedSKUs) * (pricingData.extraCharges['Sort Surcharge (Floor in/Pallet out)'] || 0) : 0;
+
+        const carrierCosts = pricingData.carrier[locationInput];
+        if (!carrierCosts) { alert(`Error: Could not find carrier pricing for "${locationInput}".`); return; }
+        let actualChassisCost = (carrierCosts.standardChassisDays > carrierCosts.freeChassisDays) ? carrierCosts.chassisCost : 0;
+        const totalCarrierCost = carrierCosts.drayRate + actualChassisCost + carrierCosts.csrCommission;
+       
+        const storageFee = (storage === 'Yes') ? (cbm * (pricingData.extraCharges['Storage CBM/Day (All)'] || 0)) : 0;
+        const commonCosts = basePricing.basePrice + cartonSurcharge + skuSurcharge + totalCarrierCost + storageFee;
+       
+        elements.containerType.textContent = containerType;
+
+        if (loadType === 'Palletized') {
+            const opCBM = pricingData.limitations['CBM per Pallet (Operations)'];
+            const whCBM = pricingData.limitations['CBM per Pallet (Warehouse)'];
+            const opPallets = Math.ceil(cbm / opCBM);
+            const whPallets = Math.ceil(cbm / whCBM);
+            const outboundSurchargeRate = pricingData.extraCharges['Outbound Pallet Surcharge (Floor in/Pallet out)'] || 0;
+            const opSurcharge = opPallets * outboundSurchargeRate;
+            const whSurcharge = whPallets * outboundSurchargeRate;
+            const lowEndRate = commonCosts + opSurcharge;
+            const highEndRate = commonCosts + whSurcharge;
+            elements.palletCount.innerHTML = `<span class="range">${opPallets} - ${whPallets}</span>`;
+            elements.allInRate.innerHTML = `<span class="range">${lowEndRate.toLocaleString('en-US', { style: 'currency', currency: 'USD' })} - ${highEndRate.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>`;
+        } else { // Floor in/Floor out
+            elements.palletCount.textContent = '-';
+            elements.allInRate.textContent = commonCosts.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+        }
+       
+        elements.resultsPane.classList.add('visible');
+    }
+
+    function clearForm() {
+        elements.cbm.value = '';
+        elements.cartonCount.value = '';
+        elements.skuCount.value = '';
+        elements.loadType.value = '';
+        elements.location.value = '';
+        elements.storage.value = 'No';
+        elements.resultsPane.classList.remove('visible');
+        elements.cbm.focus();
+    }
+   
+    function initialize() {
+        const userPassword = prompt("Please enter the password to access the calculator:", "");
+        if (userPassword === PASSWORD) {
+            elements.appContainer.style.display = 'flex';
+            fetchAndParseData();
+        } else {
+            alert("Incorrect password. Access denied.");
         }
 
-        // Initialize
-        updateProgress(1);
-    </script>
+        elements.startBtn.addEventListener('click', () => {
+            elements.welcomePage.style.display = 'none';
+            elements.calculatorPage.style.display = 'flex';
+            elements.resultsPane.style.display = 'none'; // Hide results until calculation
+        });
+
+        elements.calculateBtn.addEventListener('click', calculateEstimate);
+        elements.clearBtn.addEventListener('click', clearForm);
+
+        // 'Enter' key navigation
+        const inputs = [elements.cbm, elements.cartonCount, elements.skuCount, elements.loadType, elements.location, elements.storage];
+        inputs.forEach((input, index) => {
+            input.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    const nextInput = inputs[index + 1];
+                    if (nextInput) {
+                        nextInput.focus();
+                    } else {
+                        elements.calculateBtn.focus(); // Focus on calculate button at the end
+                    }
+                }
+            });
+        });
+    }
+   
+    initialize();
+</script>
 </body>
 </html>
